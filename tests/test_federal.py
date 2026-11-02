@@ -89,7 +89,7 @@ def test_the_app_loads_the_plugin_and_its_agencies_from_this_package_with_its_ow
     for name in ("federal", *AGENCIES):
         p = pubs.get(name)
         assert p is not None, dict(registry.errors())
-        assert p.origin == "package: liminal-plugin-federal (liminal_plugin_federal)"
+        assert p.origin in {"package: liminal-plugin-federal (liminal_plugin_federal)", "plugins/liminal-plugin-federal (liminal_plugin_federal)"}  # its package, or its checkout in the workspace\'s plugin directory
         assert p.version == version("liminal-plugin-federal") and p.api == "1.7"
     assert federal.FEDERAL.version == "" and federal.VERSION == ""
     assert not [why for where, why in registry.errors() if "federal" in where or "federal" in why]
