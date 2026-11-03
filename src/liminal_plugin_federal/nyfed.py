@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, time
 
-from liminal.sources.archive import ET
-from liminal.sources.publisher import Feed, Policy, Publisher, Read
+from liminal_lib.sources.archive import ET
+from liminal_lib.sources.publisher import Feed, Policy, Publisher, Read
 from .release import API, VERSION
 
 

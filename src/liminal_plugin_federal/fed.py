@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
 
-from liminal.sources.archive import ET
-from liminal.sources.publisher import Feed, Policy, Publisher
+from liminal_lib.sources.archive import ET
+from liminal_lib.sources.publisher import Feed, Policy, Publisher
 from .release import API, VERSION
 
 # The second day of each FOMC meeting: the decision, at 2:00 p.m. ET. True: with the Summary of

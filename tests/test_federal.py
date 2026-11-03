@@ -6,9 +6,9 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from importlib.metadata import version
 
-from liminal.sources import publishers, registry
-from liminal.sources.archive import ET
-from liminal.sources.dataset import at, ms
+from liminal_lib.sources import publishers, registry
+from liminal_lib.sources.archive import ET
+from liminal_lib.sources.dataset import at, ms
 
 import liminal_plugin_federal as federal
 from liminal_plugin_federal import bls, cftc, fed, fedreg, nyfed, sec

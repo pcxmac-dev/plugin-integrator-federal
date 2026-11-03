@@ -25,7 +25,7 @@ A Liminal plugin released on its own, registered under the entry point group `li
 outside the contract; its version is this distribution's (release.py), so each record's is left empty."""
 from __future__ import annotations
 
-from liminal.sources.publisher import Policy, Publisher
+from liminal_lib.sources.publisher import Policy, Publisher
 from .bls import PUBLISHER as BLS
 from .cftc import PUBLISHER as CFTC
 from .fed import PUBLISHER as FED

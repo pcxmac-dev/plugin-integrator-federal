@@ -9,8 +9,8 @@ import csv
 import io
 from datetime import date, timedelta
 
-from liminal.sources.dataset import Dataset, Parsed, at, day_of, ms, num, text
-from liminal.sources.publisher import Policy, Publisher
+from liminal_lib.sources.dataset import Dataset, Parsed, at, day_of, ms, num, text
+from liminal_lib.sources.publisher import Policy, Publisher
 from .release import API, VERSION
 
 CFTC = "https://www.cftc.gov/files/dea/history/"
