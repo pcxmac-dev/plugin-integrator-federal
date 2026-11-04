@@ -28,7 +28,7 @@ of the app outside the contract; its version is this distribution's (release.py)
 left empty."""
 from __future__ import annotations
 
-from liminal_lib.sources.publisher import Policy, PublisherPlugin
+from liminal_libs.sources.publisher import Policy, PublisherPlugin
 
 from .agency import Agency  # noqa: F401  (the agencies' base, the package's to import)
 from .bls import PUBLISHER as BLS

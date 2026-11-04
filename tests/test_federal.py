@@ -7,13 +7,13 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from importlib.metadata import version
 
-from liminal_lib.sources import publishers, registry
-from liminal_lib.sources.archive import ET
-from liminal_lib.sources.dataset import at, ms
-from liminal_lib.sources.publisher import PublisherPlugin
+from liminal_libs.sources import publishers, registry
+from liminal_libs.sources.archive import ET
+from liminal_libs.sources.dataset import at, ms
+from liminal_libs.sources.publisher import PublisherPlugin
 
-import liminal_plugin_federal as federal
-from liminal_plugin_federal import Agency, bls, cftc, fed, fedreg, nyfed, sec
+import plugin_integrator_federal as federal
+from plugin_integrator_federal import Agency, bls, cftc, fed, fedreg, nyfed, sec
 
 AGENCIES = ["fed", "nyfed", "sec", "bls", "fedreg", "cftc"]
 CLASSES = {"federal": federal.Federal, "fed": fed.FederalReserve, "nyfed": nyfed.NewYorkFed, "sec": sec.SEC,
@@ -114,7 +114,7 @@ def test_the_plugin_and_its_agencies_are_classes_on_the_plugin_contract():
     registry.reload()
     pubs = publishers()
     assert {n: type(pubs[n]) for n in CLASSES} == CLASSES
-    assert all((pubs[n].version, pubs[n].api) == (version("liminal-plugin-federal"), "2.0") for n in CLASSES)
+    assert all((pubs[n].version, pubs[n].api) == (version("plugin-integrator-federal"), "2.0") for n in CLASSES)
     assert all(registry.api_refusal(pubs[n].api, record=pubs[n].is_record) is None for n in CLASSES)
     assert pubs["fed"].has_calendar and pubs["fed"].has_moments and pubs["nyfed"].has_moments and not pubs["sec"].has_moments
     assert pubs["fed"].calendar(date(2026, 12, 1))[0]["what"] == "FOMC decision with projections"
@@ -127,8 +127,8 @@ def test_the_app_loads_the_plugin_and_its_agencies_from_this_package_with_its_ow
     for name in ("federal", *AGENCIES):
         p = pubs.get(name)
         assert p is not None, dict(registry.errors())
-        assert p.origin in {"package: liminal-plugin-federal (liminal_plugin_federal)", "plugins/liminal-plugin-federal (liminal_plugin_federal)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("liminal-plugin-federal") and p.api == "2.0"
+        assert p.origin in {"package: plugin-integrator-federal (plugin_integrator_federal)", "plugins/plugin-integrator-federal (plugin_integrator_federal)"}  # its package, or its checkout in the workspace\'s plugin directory
+        assert p.version == version("plugin-integrator-federal") and p.api == "2.0"
     assert federal.FEDERAL.version == "" and federal.VERSION == ""
     assert not [why for where, why in registry.errors() if "federal" in where or "federal" in why]
     assert list(pubs)[:7] == ["federal", *AGENCIES]  # the plugin's record first, its agencies after it

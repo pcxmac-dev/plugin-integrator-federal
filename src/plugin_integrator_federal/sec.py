@@ -5,8 +5,8 @@ a second: these wait for GOV_CONTACT (your name and email, sent in the User-Agen
 nothing is sent until you set it), and are read hourly, far inside that rate."""
 from __future__ import annotations
 
-from liminal_lib.sources.registry import KeyVar
-from liminal_lib.sources.publisher import Feed, Policy
+from liminal_libs.sources.registry import KeyVar
+from liminal_libs.sources.publisher import Feed, Policy
 
 from .agency import Agency
 

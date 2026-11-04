@@ -6,7 +6,7 @@ checks, keys and datasets as class attributes and its release moments and calend
 it has them; the package module keeps their instances (PUBLISHERS)."""
 from __future__ import annotations
 
-from liminal_lib.sources.publisher import PublisherPlugin
+from liminal_libs.sources.publisher import PublisherPlugin
 
 from .release import API, VERSION
 
