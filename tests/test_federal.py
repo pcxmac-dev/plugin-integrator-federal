@@ -1,6 +1,7 @@
-"""The Federal plugin, run against the app installed beside it: its parsers (the CFTC's report, the
-Federal Register's documents, the New York Fed's rates), the agencies' release moments, and the app
-loading the plugin and its six agencies from this package with its own version."""
+"""The Federal plugin, run against the library installed beside it: its parsers (the CFTC's report, the
+Federal Register's documents, the New York Fed's rates), the agencies' release moments, their classes
+on the plugin contract, and the app loading the plugin and its six agencies from this package with
+its own version."""
 from __future__ import annotations
 
 from datetime import date, datetime, time
@@ -9,11 +10,14 @@ from importlib.metadata import version
 from liminal_lib.sources import publishers, registry
 from liminal_lib.sources.archive import ET
 from liminal_lib.sources.dataset import at, ms
+from liminal_lib.sources.publisher import PublisherPlugin
 
 import liminal_plugin_federal as federal
-from liminal_plugin_federal import bls, cftc, fed, fedreg, nyfed, sec
+from liminal_plugin_federal import Agency, bls, cftc, fed, fedreg, nyfed, sec
 
 AGENCIES = ["fed", "nyfed", "sec", "bls", "fedreg", "cftc"]
+CLASSES = {"federal": federal.Federal, "fed": fed.FederalReserve, "nyfed": nyfed.NewYorkFed, "sec": sec.SEC,
+           "bls": bls.BLS, "fedreg": fedreg.FederalRegister, "cftc": cftc.CommodityFuturesTradingCommission}
 COT_HEADER = ("Market and Exchange Names,As of Date in Form YYMMDD,As of Date in Form YYYY-MM-DD,"
               "CFTC Contract Market Code,Open Interest (All),Noncommercial Positions-Long (All),"
               "Noncommercial Positions-Short (All),Noncommercial Positions-Spreading (All),"
@@ -70,16 +74,50 @@ def test_the_new_york_feds_rates_are_read_with_the_target_range():
 
 
 def test_the_agencies_release_moments():
-    assert fed.moments(date(2026, 12, 9))[0] == datetime(2026, 12, 9, 14, 0, 20, tzinfo=ET)  # a decision day
-    assert fed.moments(date(2026, 11, 18)) and not fed.moments(date(2026, 11, 19))  # the October minutes, three weeks after
+    assert fed.PUBLISHER.moments(date(2026, 12, 9))[0] == datetime(2026, 12, 9, 14, 0, 20, tzinfo=ET)  # a decision day
+    assert fed.PUBLISHER.moments(date(2026, 11, 18)) and not fed.PUBLISHER.moments(date(2026, 11, 19))  # the October minutes, three weeks after
     assert set(fed.FOMC_DECISIONS) >= {date(2026, 10, 28), date(2026, 12, 9), date(2027, 6, 9)}
-    upcoming = fed.calendar(date(2026, 12, 1))
+    upcoming = fed.PUBLISHER.calendar(date(2026, 12, 1))
     assert upcoming[0]["kind"] == "fomc-decision" and upcoming[0]["projections"] is True
-    assert bls.moments(date(2026, 11, 6)) == tuple(datetime.combine(date(2026, 11, 6), t, tzinfo=ET)
-                                                   for t in (time(8, 30, 20), time(8, 33), time(10, 0, 20)))
-    assert bls.moments(date(2026, 11, 7)) == () and nyfed.moments(date(2026, 11, 8)) == ()  # weekends
-    assert nyfed.moments(date(2026, 11, 6)) == (datetime(2026, 11, 6, 8, 5, tzinfo=ET), datetime(2026, 11, 6, 9, 5, tzinfo=ET))
-    assert fedreg.moments(date(2026, 11, 6)) == (datetime(2026, 11, 6, 6, 5, tzinfo=ET),)
+    assert bls.PUBLISHER.moments(date(2026, 11, 6)) == tuple(datetime.combine(date(2026, 11, 6), t, tzinfo=ET)
+                                                             for t in (time(8, 30, 20), time(8, 33), time(10, 0, 20)))
+    assert bls.PUBLISHER.moments(date(2026, 11, 7)) == () and nyfed.PUBLISHER.moments(date(2026, 11, 8)) == ()  # weekends
+    assert nyfed.PUBLISHER.moments(date(2026, 11, 6)) == (datetime(2026, 11, 6, 8, 5, tzinfo=ET), datetime(2026, 11, 6, 9, 5, tzinfo=ET))
+    assert fedreg.PUBLISHER.moments(date(2026, 11, 6)) == (datetime(2026, 11, 6, 6, 5, tzinfo=ET),)
+
+
+def test_the_plugin_and_its_agencies_are_classes_on_the_plugin_contract():
+    """Each publisher is an instance of its class (plugin API 2.0): the agencies subclasses of
+    Agency (a part of the plugin, official), the plugin its own class; its hooks are methods where
+    the record had callbacks, the contract's defaults elsewhere; the app loads each as its class."""
+    by = {p.name: p for p in federal.PUBLISHERS}
+    assert {n: type(p) for n, p in by.items()} == CLASSES
+    for n, p in by.items():
+        assert isinstance(p, PublisherPlugin) and not p.is_record and p.api == "2.0" and p.KIND == "publisher", n
+        assert isinstance(p, Agency) == (n != "federal") and p.part_of == ("" if n == "federal" else "federal"), n
+        assert p.kind == "official" and p.version == "" and not p.has_settings, n
+    assert issubclass(Agency, PublisherPlugin) and federal.API == "2.0" and Agency.api == "2.0"
+    assert {n: (p.has_moments, p.has_calendar, p.reads_itself) for n, p in by.items()} == {
+        "federal": (False, False, False), "fed": (True, True, False), "nyfed": (True, False, False),
+        "sec": (False, False, False), "bls": (True, False, False), "fedreg": (True, False, False),
+        "cftc": (False, False, False)}
+    assert by["sec"].moments(date(2026, 11, 6)) == () and by["cftc"].calendar(date(2026, 11, 6)) == []  # the contract's defaults
+    assert by["federal"].moments(date(2026, 11, 6)) == () and by["federal"].calendar(date(2026, 11, 6)) == []
+    # what the agencies share is the base's: their terms' public-domain phrase, each one's words as they were
+    assert fed.PUBLISHER.policy.terms == "RSS feeds the Fed offers for programs; public domain (a U.S. government work)"
+    assert bls.PUBLISHER.policy.terms == "RSS feeds BLS offers for programs; public domain (a U.S. government work)"
+    assert cftc.PUBLISHER.policy.terms == "its reports are public domain (a U.S. government work); its news feeds are off (October 2026)"
+    assert cftc.CFTC == "https://www.cftc.gov/files/dea/history/"  # the module's name for its history files, not its class
+    moved = fed.PUBLISHER.with_(order=1)  # a changed copy, the registry's way (its origin and version)
+    assert type(moved) is fed.FederalReserve and moved.order == 1 and fed.PUBLISHER.order == 200 and moved.has_calendar
+    assert moved.moments(date(2026, 12, 9)) == fed.PUBLISHER.moments(date(2026, 12, 9))
+    registry.reload()
+    pubs = publishers()
+    assert {n: type(pubs[n]) for n in CLASSES} == CLASSES
+    assert all((pubs[n].version, pubs[n].api) == (version("liminal-plugin-federal"), "2.0") for n in CLASSES)
+    assert all(registry.api_refusal(pubs[n].api, record=pubs[n].is_record) is None for n in CLASSES)
+    assert pubs["fed"].has_calendar and pubs["fed"].has_moments and pubs["nyfed"].has_moments and not pubs["sec"].has_moments
+    assert pubs["fed"].calendar(date(2026, 12, 1))[0]["what"] == "FOMC decision with projections"
 
 
 def test_the_app_loads_the_plugin_and_its_agencies_from_this_package_with_its_own_version():
@@ -90,7 +128,7 @@ def test_the_app_loads_the_plugin_and_its_agencies_from_this_package_with_its_ow
         p = pubs.get(name)
         assert p is not None, dict(registry.errors())
         assert p.origin in {"package: liminal-plugin-federal (liminal_plugin_federal)", "plugins/liminal-plugin-federal (liminal_plugin_federal)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("liminal-plugin-federal") and p.api == "1.7"
+        assert p.version == version("liminal-plugin-federal") and p.api == "2.0"
     assert federal.FEDERAL.version == "" and federal.VERSION == ""
     assert not [why for where, why in registry.errors() if "federal" in where or "federal" in why]
     assert list(pubs)[:7] == ["federal", *AGENCIES]  # the plugin's record first, its agencies after it

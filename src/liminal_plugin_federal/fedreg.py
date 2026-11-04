@@ -7,8 +7,9 @@ from __future__ import annotations
 from datetime import date, datetime, time
 
 from liminal_lib.sources.archive import ET
-from liminal_lib.sources.publisher import Feed, Policy, Publisher, Read
-from .release import API, VERSION
+from liminal_lib.sources.publisher import Feed, Policy, Read
+
+from .agency import Agency
 
 FEDREG_AGENCIES = {  # the Federal Register's agency slugs -> the name shown
     "securities-and-exchange-commission": "SEC", "commodity-futures-trading-commission": "CFTC",
@@ -46,18 +47,22 @@ def parse(answer, feed) -> Read:
     return Read(items=parse_fedreg(answer.json()))
 
 
-def moments(day: date) -> tuple[datetime, ...]:
-    return () if day.weekday() >= 5 else (datetime.combine(day, time(6, 5), tzinfo=ET),)
+class FederalRegister(Agency):
+    """The Federal Register: one feed of its JSON API (parsed by `parse`), read just after its
+    6:00 a.m. publication on a business day (`moments`)."""
+
+    name = "fedreg"
+    title = "Federal Register"
+    order = 240
+    about = "rules and notices of the SEC (FINRA's and the exchanges' filings), the CFTC, the Fed and the Treasury"
+    feeds = (Feed("fedreg", "Federal Register", "Rules and notices: SEC (FINRA, exchanges), CFTC, Fed, Treasury",
+                  FEDREG_URL, "fedreg", every_minutes=180, parse=parse),)
+    policy = Policy(hosts=("www.federalregister.gov",), min_minutes=30, per_day=30,
+                    terms="the Federal Register API, documented for programs; no key",
+                    terms_url="https://www.federalregister.gov/developers/documentation/api/v1")
+
+    def moments(self, day: date) -> tuple[datetime, ...]:
+        return () if day.weekday() >= 5 else (datetime.combine(day, time(6, 5), tzinfo=ET),)
 
 
-PUBLISHER = Publisher(
-    version=VERSION, api=API, part_of="federal",  # the Federal plugin's release and contract (federal/__init__.py)
-    name="fedreg", title="Federal Register", order=240,
-    about="rules and notices of the SEC (FINRA's and the exchanges' filings), the CFTC, the Fed and the Treasury",
-    feeds=(Feed("fedreg", "Federal Register", "Rules and notices: SEC (FINRA, exchanges), CFTC, Fed, Treasury",
-                FEDREG_URL, "fedreg", every_minutes=180, parse=parse),),
-    policy=Policy(hosts=("www.federalregister.gov",), min_minutes=30, per_day=30,
-                  terms="the Federal Register API, documented for programs; no key",
-                  terms_url="https://www.federalregister.gov/developers/documentation/api/v1"),
-    moments=moments,
-)
+PUBLISHER = FederalRegister()

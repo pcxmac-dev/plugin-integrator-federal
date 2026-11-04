@@ -1,5 +1,5 @@
 """The CFTC: its Commitments of Traders, futures positioning each week (open interest; commercial,
-non-commercial and small traders' positions), a dataset it declares (Publisher.datasets:
+non-commercial and small traders' positions), a dataset it declares (PublisherPlugin.datasets:
 cftc-cot-legacy, the legacy futures-only report from 1986, fetched with `datasets fetch` and refreshed
 weekly). Its rules and notices arrive through the Federal Register; its own news feeds are off (the
 CFTC disabled them all in October 2026), so it has no feed to read here yet."""
@@ -10,10 +10,11 @@ import io
 from datetime import date, timedelta
 
 from liminal_lib.sources.dataset import Dataset, Parsed, at, day_of, ms, num, text
-from liminal_lib.sources.publisher import Policy, Publisher
-from .release import API, VERSION
+from liminal_lib.sources.publisher import Policy
 
-CFTC = "https://www.cftc.gov/files/dea/history/"
+from .agency import Agency
+
+CFTC = "https://www.cftc.gov/files/dea/history/"  # its history files (the app's tests read it by this name)
 COT_FIELDS = {
     "Open Interest (All)": "open_interest",
     "Noncommercial Positions-Long (All)": "noncommercial_long",
@@ -65,14 +66,21 @@ def cot_published(ts: int) -> int:
 COT = Dataset("cftc-cot-legacy", "CFTC Commitments of Traders, legacy futures-only, weekly (from 1986)",
               "CFTC (public domain)", cot_files, parse_cot, 7, "cftc", "official", published=cot_published)
 
-PUBLISHER = Publisher(
-    version=VERSION, api=API, part_of="federal",  # the Federal plugin's release and contract (federal/__init__.py)
-    name="cftc", title="CFTC", order=250,
-    about="Commitments of Traders: futures positioning, weekly from 1986 (a dataset); its rules come "
-          "through the Federal Register",
-    feeds=(), datasets=(COT,),
-    policy=Policy(hosts=("www.cftc.gov",), min_minutes=60, per_day=30,
-                  terms="its reports are public domain (a U.S. government work); its news feeds are off "
-                        "(October 2026)",
-                  terms_url="https://www.cftc.gov/webpolicy/index.htm"),
-)
+
+class CommodityFuturesTradingCommission(Agency):
+    """The CFTC: no feed to read yet, its Commitments of Traders a dataset (COT). Named in full
+    because `CFTC` in this module is its history files' URL."""
+
+    name = "cftc"
+    title = "CFTC"
+    order = 250
+    about = ("Commitments of Traders: futures positioning, weekly from 1986 (a dataset); its rules come "
+             "through the Federal Register")
+    feeds = ()
+    datasets = (COT,)
+    policy = Policy(hosts=("www.cftc.gov",), min_minutes=60, per_day=30,
+                    terms=f"its reports are {Agency.PUBLIC_DOMAIN}; its news feeds are off (October 2026)",
+                    terms_url="https://www.cftc.gov/webpolicy/index.htm")
+
+
+PUBLISHER = CommodityFuturesTradingCommission()

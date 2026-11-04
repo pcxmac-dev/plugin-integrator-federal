@@ -25,7 +25,7 @@ as `package: liminal-plugin-federal`, with this package's version.
 Into the app's environment, from the app's folder:
 
 ```powershell
-.venv\Scripts\python.exe -m pip install "liminal-plugin-federal @ git+https://github.com/pcxmac-dev/liminal-plugin-federal@v1.4.1"
+.venv\Scripts\python.exe -m pip install "liminal-plugin-federal @ git+https://github.com/pcxmac-dev/liminal-plugin-federal@v0.2.0"
 ```
 
 or with the app's plugins (`pip install -e ".[plugins]"` in liminal-app). The app loads it on its next
@@ -34,15 +34,17 @@ environment variable, never written to a file).
 
 ## Compatibility
 
-It is written for plugin API 1.7 (`API` in `release.py`: parts of one plugin, a publisher's keys,
-the datasets its parts declare, each feed's own parser). An app offering 1.7 or a later 1.x loads
-it; an app of another major, or one older than 1.7, leaves it out and says why on the Plugins view.
+It is written for plugin API 2.0, the class contract of liminal-lib 1.3.0 (`API` in `release.py`): the
+plugin is `Federal` and each agency a subclass of the package's `Agency`, a `PublisherPlugin` (parts of
+one plugin, a publisher's keys, the datasets its parts declare, each feed's own parser; the Fed's
+release moments and calendar its methods). An app offering 2.0 or a later 2.x loads it; an app of
+another major leaves it out and says why on the Plugins view.
 
 ## Develop
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install "liminal-lib @ git+https://github.com/pcxmac-dev/liminal-lib@main"
+.venv\Scripts\python.exe -m pip install "liminal-lib @ git+https://github.com/pcxmac-dev/liminal-lib@release/0.2.0"
 .venv\Scripts\python.exe -m pip install -e ".[dev]"
 .venv\Scripts\python.exe -m pytest -q
 ```

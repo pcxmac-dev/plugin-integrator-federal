@@ -11,8 +11,9 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta
 
 from liminal_lib.sources.archive import ET
-from liminal_lib.sources.publisher import Feed, Policy, Publisher
-from .release import API, VERSION
+from liminal_lib.sources.publisher import Feed, Policy
+
+from .agency import Agency
 
 # The second day of each FOMC meeting: the decision, at 2:00 p.m. ET. True: with the Summary of
 # Economic Projections (the dot plot).
@@ -31,36 +32,39 @@ def _minutes_days() -> set[date]:
     return {d + MINUTES_AFTER for d in FOMC_DECISIONS}
 
 
-def moments(day: date) -> tuple[datetime, ...]:
-    """The reads at the FOMC's releases on a day (ET): the statement, or the minutes."""
-    reads = DECISION_READS if day in FOMC_DECISIONS else MINUTES_READS if day in _minutes_days() else ()
-    return tuple(datetime.combine(day, t, tzinfo=ET) for t in reads)
+class FederalReserve(Agency):
+    """The Fed: its press releases and its speeches and testimony, read at the FOMC's release
+    moments (`moments`); the FOMC's decisions and minutes its calendar (`calendar`)."""
 
-
-def calendar(today: date) -> list[dict]:
-    """The FOMC's next decisions and minutes, from `today` on."""
-    out = [{"when": datetime.combine(d, time(14, 0), tzinfo=ET).isoformat(), "kind": "fomc-decision",
-            "what": "FOMC decision" + (" with projections" if sep else ""), "projections": sep}
-           for d, sep in FOMC_DECISIONS.items() if d >= today]
-    out += [{"when": datetime.combine(d, time(14, 0), tzinfo=ET).isoformat(), "kind": "fomc-minutes",
-             "what": "FOMC minutes"} for d in _minutes_days() if d >= today]
-    return sorted(out, key=lambda c: c["when"])
-
-
-PUBLISHER = Publisher(
-    version=VERSION, api=API, part_of="federal",  # the Federal plugin's release and contract (federal/__init__.py)
-    name="fed", title="Federal Reserve", order=200,
-    about="press releases (monetary policy, regulation, enforcement), speeches and testimony; "
-          "read at the FOMC's 2:00 p.m. releases",
-    feeds=(
+    name = "fed"
+    title = "Federal Reserve"
+    order = 200
+    about = ("press releases (monetary policy, regulation, enforcement), speeches and testimony; "
+             "read at the FOMC's 2:00 p.m. releases")
+    feeds = (
         Feed("fed-press", "Fed", "Press releases", "https://www.federalreserve.gov/feeds/press_all.xml",
              every_minutes=30),
         Feed("fed-speeches", "Fed", "Speeches and testimony",
              "https://www.federalreserve.gov/feeds/speeches_and_testimony.xml", every_minutes=60, moments=False,
              item_kind="speech"),
-    ),
-    policy=Policy(hosts=("www.federalreserve.gov",), min_minutes=1, per_day=120,
-                  terms="RSS feeds the Fed offers for programs; public domain (a U.S. government work)",
-                  terms_url="https://www.federalreserve.gov/feeds/feeds.htm"),
-    moments=moments, calendar=calendar,
-)
+    )
+    policy = Policy(hosts=("www.federalreserve.gov",), min_minutes=1, per_day=120,
+                    terms=f"RSS feeds the Fed offers for programs; {Agency.PUBLIC_DOMAIN}",
+                    terms_url="https://www.federalreserve.gov/feeds/feeds.htm")
+
+    def moments(self, day: date) -> tuple[datetime, ...]:
+        """The reads at the FOMC's releases on a day (ET): the statement, or the minutes."""
+        reads = DECISION_READS if day in FOMC_DECISIONS else MINUTES_READS if day in _minutes_days() else ()
+        return tuple(datetime.combine(day, t, tzinfo=ET) for t in reads)
+
+    def calendar(self, today: date) -> list[dict]:
+        """The FOMC's next decisions and minutes, from `today` on."""
+        out = [{"when": datetime.combine(d, time(14, 0), tzinfo=ET).isoformat(), "kind": "fomc-decision",
+                "what": "FOMC decision" + (" with projections" if sep else ""), "projections": sep}
+               for d, sep in FOMC_DECISIONS.items() if d >= today]
+        out += [{"when": datetime.combine(d, time(14, 0), tzinfo=ET).isoformat(), "kind": "fomc-minutes",
+                 "what": "FOMC minutes"} for d in _minutes_days() if d >= today]
+        return sorted(out, key=lambda c: c["when"])
+
+
+PUBLISHER = FederalReserve()

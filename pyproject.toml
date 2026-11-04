@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "liminal-plugin-federal"
-version = "1.4.1"  # the plugin's own release (CHANGELOG.md); the app shows it on the Plugins view
+version = "0.2.0"  # the plugin's own release (CHANGELOG.md); the app shows it on the Plugins view
 description = "The US federal agencies for Liminal: the Fed, the New York Fed, the SEC, BLS, the Federal Register and the CFTC, as publishers of one plugin."
 readme = "README.md"
 requires-python = ">=3.10"
