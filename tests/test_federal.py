@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, time
 from importlib.metadata import version
+from pathlib import Path
 
 from liminal_libs.sources import publishers, registry
 from liminal_libs.sources.archive import ET
@@ -35,6 +36,18 @@ FEDREG = {"results": [
      "html_url": "https://www.federalregister.gov/d/2026-3", "document_number": "2026-3",
      "agencies": [{"slug": "commodity-futures-trading-commission"}]},
 ]}
+
+
+def own_version(p) -> str:
+    """The version the app shows for it: its checkout's pyproject.toml when it is loaded from the workspace's
+    plugin directory (an editable install's metadata can lag behind a release), else its installed
+    distribution's."""
+    if p.origin.startswith("plugins/"):
+        import tomllib
+
+        pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        return tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
+    return version("plugin-integrator-federal")
 
 
 def _cot(day: str) -> str:
@@ -87,16 +100,16 @@ def test_the_agencies_release_moments():
 
 
 def test_the_plugin_and_its_agencies_are_classes_on_the_plugin_contract():
-    """Each publisher is an instance of its class (plugin API 2.0): the agencies subclasses of
+    """Each publisher is an instance of its class (plugin API 2.2): the agencies subclasses of
     Agency (a part of the plugin, official), the plugin its own class; its hooks are methods where
     the record had callbacks, the contract's defaults elsewhere; the app loads each as its class."""
     by = {p.name: p for p in federal.PUBLISHERS}
     assert {n: type(p) for n, p in by.items()} == CLASSES
     for n, p in by.items():
-        assert isinstance(p, PublisherPlugin) and not p.is_record and p.api == "2.0" and p.KIND == "publisher", n
+        assert isinstance(p, PublisherPlugin) and not p.is_record and p.api == "2.2" and p.KIND == "publisher", n
         assert isinstance(p, Agency) == (n != "federal") and p.part_of == ("" if n == "federal" else "federal"), n
         assert p.kind == "official" and p.version == "" and not p.has_settings, n
-    assert issubclass(Agency, PublisherPlugin) and federal.API == "2.0" and Agency.api == "2.0"
+    assert issubclass(Agency, PublisherPlugin) and federal.API == "2.2" and Agency.api == "2.2"
     assert {n: (p.has_moments, p.has_calendar, p.reads_itself) for n, p in by.items()} == {
         "federal": (False, False, False), "fed": (True, True, False), "nyfed": (True, False, False),
         "sec": (False, False, False), "bls": (True, False, False), "fedreg": (True, False, False),
@@ -114,7 +127,7 @@ def test_the_plugin_and_its_agencies_are_classes_on_the_plugin_contract():
     registry.reload()
     pubs = publishers()
     assert {n: type(pubs[n]) for n in CLASSES} == CLASSES
-    assert all((pubs[n].version, pubs[n].api) == (version("plugin-integrator-federal"), "2.0") for n in CLASSES)
+    assert all((pubs[n].version, pubs[n].api) == (own_version(pubs[n]), "2.2") for n in CLASSES)
     assert all(registry.api_refusal(pubs[n].api, record=pubs[n].is_record) is None for n in CLASSES)
     assert pubs["fed"].has_calendar and pubs["fed"].has_moments and pubs["nyfed"].has_moments and not pubs["sec"].has_moments
     assert pubs["fed"].calendar(date(2026, 12, 1))[0]["what"] == "FOMC decision with projections"
@@ -128,7 +141,7 @@ def test_the_app_loads_the_plugin_and_its_agencies_from_this_package_with_its_ow
         p = pubs.get(name)
         assert p is not None, dict(registry.errors())
         assert p.origin in {"package: plugin-integrator-federal (plugin_integrator_federal)", "plugins/plugin-integrator-federal (plugin_integrator_federal)"}  # its package, or its checkout in the workspace\'s plugin directory
-        assert p.version == version("plugin-integrator-federal") and p.api == "2.0"
+        assert p.version == own_version(p) and p.api == "2.2"
     assert federal.FEDERAL.version == "" and federal.VERSION == ""
     assert not [why for where, why in registry.errors() if "federal" in where or "federal" in why]
     assert list(pubs)[:7] == ["federal", *AGENCIES]  # the plugin's record first, its agencies after it

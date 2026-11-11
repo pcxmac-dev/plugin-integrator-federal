@@ -13,6 +13,7 @@ from liminal_libs.sources.dataset import Dataset, Parsed, at, day_of, ms, num, t
 from liminal_libs.sources.publisher import Policy
 
 from .agency import Agency
+from .apis import CFTC_API
 
 CFTC = "https://www.cftc.gov/files/dea/history/"  # its history files (the app's tests read it by this name)
 COT_FIELDS = {
@@ -76,6 +77,7 @@ class CommodityFuturesTradingCommission(Agency):
     order = 250
     about = ("Commitments of Traders: futures positioning, weekly from 1986 (a dataset); its rules come "
              "through the Federal Register")
+    apis = (CFTC_API,)  # what it attaches to (apis.py)
     feeds = ()
     datasets = (COT,)
     policy = Policy(hosts=("www.cftc.gov",), min_minutes=60, per_day=30,

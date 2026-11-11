@@ -9,6 +9,7 @@ from liminal_libs.sources.registry import KeyVar
 from liminal_libs.sources.publisher import Feed, Policy
 
 from .agency import Agency
+from .apis import SEC_API
 
 
 class SEC(Agency):
@@ -19,6 +20,7 @@ class SEC(Agency):
     title = "SEC"
     order = 220
     about = "press releases and trading suspensions"
+    apis = (SEC_API,)  # what it attaches to (apis.py)
     feeds = (
         Feed("sec-press", "SEC", "Press releases", "https://www.sec.gov/news/pressreleases.rss", every_minutes=60),
         Feed("sec-suspensions", "SEC", "Trading suspensions",

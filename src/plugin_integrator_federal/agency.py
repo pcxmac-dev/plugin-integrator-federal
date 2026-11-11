@@ -13,7 +13,8 @@ from .release import API, VERSION
 
 class Agency(PublisherPlugin):
     """A federal agency: a publisher part of the Federal plugin. A subclass sets `name`, `title`,
-    `order`, `about`, `feeds` and `policy` (and `keys`, `datasets` where it has them), and overrides
+    `order`, `about`, `feeds`, `policy` and `apis` (its card, apis.py; and `keys`, `datasets` where it has
+    them), and overrides
     `moments` (its reads at its release moments) and `calendar` (its scheduled releases, for the
     views) where it publishes at set times; the contract's defaults otherwise (none)."""
 

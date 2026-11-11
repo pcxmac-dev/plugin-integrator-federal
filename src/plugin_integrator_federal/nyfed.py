@@ -10,6 +10,7 @@ from liminal_libs.sources.archive import ET
 from liminal_libs.sources.publisher import Feed, Policy, Read
 
 from .agency import Agency
+from .apis import NYFED_API
 
 
 def parse_nyfed(data: dict) -> dict | None:
@@ -37,6 +38,7 @@ class NewYorkFed(Agency):
     title = "New York Fed"
     order = 210
     about = "the federal funds target range, the effective federal funds rate and SOFR"
+    apis = (NYFED_API,)  # what it attaches to (apis.py)
     feeds = (
         Feed("nyfed-effr", "New York Fed", "Effective federal funds rate and target range",
              "https://markets.newyorkfed.org/api/rates/unsecured/effr/last/1.json", "nyfed", every_minutes=240,

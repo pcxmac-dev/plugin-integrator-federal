@@ -9,6 +9,7 @@ from liminal_libs.sources.archive import ET
 from liminal_libs.sources.publisher import Feed, Policy
 
 from .agency import Agency
+from .apis import BLS_API
 
 
 class BLS(Agency):
@@ -19,6 +20,7 @@ class BLS(Agency):
     title = "Bureau of Labor Statistics"
     order = 230
     about = "the employment situation, CPI, PPI and job openings, at their 8:30 a.m. releases"
+    apis = (BLS_API,)  # what it attaches to (apis.py)
     feeds = (
         Feed("bls-empsit", "BLS", "Employment Situation", "https://www.bls.gov/feed/empsit.rss", every_minutes=120,
              item_kind="data release"),

@@ -10,6 +10,7 @@ from liminal_libs.sources.archive import ET
 from liminal_libs.sources.publisher import Feed, Policy, Read
 
 from .agency import Agency
+from .apis import FEDREG_API
 
 FEDREG_AGENCIES = {  # the Federal Register's agency slugs -> the name shown
     "securities-and-exchange-commission": "SEC", "commodity-futures-trading-commission": "CFTC",
@@ -55,6 +56,7 @@ class FederalRegister(Agency):
     title = "Federal Register"
     order = 240
     about = "rules and notices of the SEC (FINRA's and the exchanges' filings), the CFTC, the Fed and the Treasury"
+    apis = (FEDREG_API,)  # what it attaches to (apis.py)
     feeds = (Feed("fedreg", "Federal Register", "Rules and notices: SEC (FINRA, exchanges), CFTC, Fed, Treasury",
                   FEDREG_URL, "fedreg", every_minutes=180, parse=parse),)
     policy = Policy(hosts=("www.federalregister.gov",), min_minutes=30, per_day=30,

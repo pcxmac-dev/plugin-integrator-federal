@@ -14,6 +14,7 @@ from liminal_libs.sources.archive import ET
 from liminal_libs.sources.publisher import Feed, Policy
 
 from .agency import Agency
+from .apis import FED_API
 
 # The second day of each FOMC meeting: the decision, at 2:00 p.m. ET. True: with the Summary of
 # Economic Projections (the dot plot).
@@ -41,6 +42,7 @@ class FederalReserve(Agency):
     order = 200
     about = ("press releases (monetary policy, regulation, enforcement), speeches and testimony; "
              "read at the FOMC's 2:00 p.m. releases")
+    apis = (FED_API,)  # what it attaches to (apis.py)
     feeds = (
         Feed("fed-press", "Fed", "Press releases", "https://www.federalreserve.gov/feeds/press_all.xml",
              every_minutes=30),
